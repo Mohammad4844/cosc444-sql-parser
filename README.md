@@ -36,32 +36,33 @@ orders: id, user_id, date, amount
 # database tables & fields
 <table> := users | orders
 <field> := id | email | first_name | last_name | user_id | date | amount
+<table-field> := <table>.<field> | <field>
 
 # basic definitions
-<string> := **all legal strings**
+<string> := **all legal strings in between single qoutes**
 <number> := **all legal intgers or floats**
-<alias> := **all strings in snake case** | <string>
+<alias> := <string>
 <wildcard> := λ | % | _
 <operator> := + | - | * | / | = | != | < | > | <= | >= 
 <function> := SUM | AVG | COUNT | MAX | MIN | UPPER | LOWER
 <regex> := <wildcard> <string> <wildcard>
 
 # logic definitions
-<term> := <field> | <string> | <number> | (<expression>)
-<expression> := <term> | <term> <operator> <term> | <function> ( <expression> ) | <field> LIKE <regex> | ( <select-query> )
+<term> := <table-field> | <string> | <number> | (<expression>)
+<expression> := <term> | <term> <operator> <term> | <function> ( <expression> ) | <table-field> LIKE <regex> | ( <select-query> )
 <condition> = <expression> | <expression> AND <condition> | <expression> OR <condition>
 
 # lists
-<field-list> := <field> | <field-list>, <field>
-<expression-list> := <expression> | <expression-list>, <expression>
-<assignment-list> := <field> = <value> | <assignment-list>, <field> = <value>
+<field-list> := <table-field> | <table-field>, <field-list>
+<expression-list> := <expression> | <expression>, <expression-list>
+<assignment-list> := <table-field> = <value> | <table-field> = <value>, <assignment-list>
 
 # query helpers (mostly for select query)
 <distinct-clause> := λ | DISTINCT
 <select-clause> := * | <field-alias-list>
-<field-alias-list> := <field-alias> | <field-alias-list>, <field-alias>
-<field-alias> := <field> | <field> as <alias>
-<table-alias-list> := <table-alias> | <table-alias-list>, <table-alias>
+<field-alias-list> := <field-alias> | <field-alias>, <field-alias-list>
+<field-alias> := <table-field> | <table-field> as <alias>
+<table-alias-list> := <table-alias> | <table-alias>, <table-alias-list>
 <table-alias> := <table> | <table> as <alias>
 <table-clause> := <table> | <table> <join> JOIN <table> ON <condition>
 <join> := RIGHT | LEFT | INNER | FULL
@@ -69,7 +70,7 @@ orders: id, user_id, date, amount
 <group-clause> := λ | GROUP BY <field-list>
 <having-clause> := λ | HAVING <condition>
 <order-clause> := λ | <order-list>
-<order-list> := <field> <order-direction> | <order-list>, <field> <order-direction>
+<order-list> := <table-field> <order-direction> | <table-field> <order-direction>, <order-list>
 <order-direction> := λ | ASC | DESC
 
 # basic queries
@@ -83,7 +84,7 @@ orders: id, user_id, date, amount
 # big picture sql
 <comment> := /*<string>*/
 <statement> := <select-query>; | <insert-query>; | <update-query>; | <delete-query>; | <comment>
-<sql> := <statement> | <sql> <statement>
+<sql> := <statement> | <statement> <sql>
 
 ```
 
