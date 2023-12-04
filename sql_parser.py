@@ -1,3 +1,5 @@
+import re
+
 class Parser:
     def __init__(self, input):
         self.input = input
@@ -73,6 +75,80 @@ class Parser:
             return 'Incorrect SQL Code'
         else: 
             return 'Parse Successful'
+        
+    def parse_string(self, index):
+        """
+        <string> := **all legal strings in between single qoutes**
+        """
+        if index > len(self.input):
+            return None
+        pattern = r"^'(.*?)'"
+        match = re.search(pattern, self.input[index:])
+
+        if match:
+            return index + match.end()
+        else:
+            return None
+    
+    def parse_integer(self, index):
+        """
+        <integer> := **all legal integers**
+        """
+        if index > len(self.input):
+            return None
+        pattern = r"^\d+"
+        match = re.search(pattern, self.input[index:])
+
+        if match:
+            return index + match.end()
+        else:
+            return None
+
+    def parse_floating_point(self, index):
+        """
+        <float> := **all legal floats of the form XX.XX**
+        """
+        if index > len(self.input):
+            return None
+        pattern = r"^\d+\.\d+"
+        match = re.search(pattern, self.input[index:])
+
+        if match:
+            return index + match.end()
+        else:
+            return None
+    
+    def parse_alias(self, index):
+        """
+        <alias> := <string>
+        """
+        if index > len(self.input):
+            return None
+        return self.parse_string(index)
+    
+    def parse_operator(self, index):
+        """
+        <operator> := + | - | * | / | = | != | < | > | <= | >= 
+        """
+        if index > len(self.input):
+            return None
+        operators = ['+', '-', '*', '/', '=', '!=', '<', '>', '<=', '>=']
+        for operator in operators:
+            if self.input[index:].startswith(operator):
+                return index + len(operator)
+        return None
+    
+    def parse_function(self, index):
+        """
+        <function> := SUM | AVG | COUNT | MAX | MIN | UPPER | LOWER
+        """
+        if index > len(self.input):
+            return None
+        functions = ['SUM', 'AVG', 'COUNT', 'MAX', 'MIN', 'UPPER', 'LOWER']
+        for function in functions:
+            if self.input[index:].startswith(function):
+                return index + len(function)
+        return None
 
 
 
