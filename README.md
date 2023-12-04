@@ -40,16 +40,15 @@ orders: id, user_id, date, amount
 
 # basic definitions
 <string> := **all legal strings in between single qoutes**
-<number> := **all legal intgers or floats**
+<integer> := **all legal integers**
+<float> := **all legal floats of the form XX.XX**
 <alias> := <string>
-<wildcard> := λ | % | _
 <operator> := + | - | * | / | = | != | < | > | <= | >= 
 <function> := SUM | AVG | COUNT | MAX | MIN | UPPER | LOWER
-<regex> := <wildcard> <string> <wildcard>
 
 # logic definitions
-<term> := <table-field> | <string> | <number> | (<expression>)
-<expression> := <term> | <term> <operator> <term> | <function> ( <expression> ) | <table-field> LIKE <regex> | ( <select-query> )
+<term> := <table-field> | <string> | <integer> | <float> | (<expression>)
+<expression> := <term> | <term> <operator> <term> | <function> ( <expression> ) | <table-field> LIKE <string> | ( <select-query> )
 <condition> = <expression> | <expression> AND <condition> | <expression> OR <condition>
 
 # lists
