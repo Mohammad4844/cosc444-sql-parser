@@ -36,6 +36,14 @@ def flatten_and_reduce(lst):
 
 # @decorate_all_methods(log_function_call)
 class Parser:
+    """
+    Each parse function should be defined:
+    Args:
+    - index (int) : a valid index you want to start searching from
+    Return:
+    - indices (Arr[int]) : an array of integers that contain legal inidices
+    
+    """
     def __init__(self, input):
         self.input = input.strip()
 
@@ -400,22 +408,21 @@ class Parser:
 
 
 
+if __name__ == '__main__':
+    strings = [
+        "first_name = 30 AND amount > 4"
+    ]
 
-
-strings = [
-    "first_name = 30 AND amount > 4"
-]
-
-strings = [
-    "id = 5",                                    # Simple equality
-    "email = 'example@email.com'",               # String equality
-    "first_name = 'John' AND amount > 100",      # Combination with AND
-    "amount < 200 OR first_name = 'Alice'",      # Combination with OR
-    "id IS NOT NULL",                            # NULL check
-    "first_name LIKE 'J%'",                      # Pattern matching with LIKE
-    "email = 'user@example.com' OR amount >= 150 AND amount <= 300", # Complex combination 
-]
-for s in strings:
-    parser = Parser(s)
-    result = parser.parse()
-    print(result)
+    strings = [
+        "id = 5",                                    # Simple equality
+        "email = 'example@email.com'",               # String equality
+        "first_name = 'John' AND amount > 100",      # Combination with AND
+        "amount < 200 OR first_name = 'Alice'",      # Combination with OR
+        "id IS NOT NULL",                            # NULL check
+        "first_name LIKE 'J%'",                      # Pattern matching with LIKE
+        "email = 'user@example.com' OR amount >= 150 AND amount <= 300", # Complex combination 
+    ]
+    for s in strings:
+        parser = Parser(s)
+        result = parser.parse()
+        print(result)
