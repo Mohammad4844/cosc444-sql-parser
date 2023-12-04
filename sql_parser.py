@@ -147,7 +147,7 @@ class Parser:
         if index > len(self.input):
             return []
         index = self.skip_whitespace(index)
-        pattern = r"^\d"
+        pattern = r"^\d+"
         match = re.search(pattern, self.input[index:])
 
         if match:
@@ -402,10 +402,18 @@ class Parser:
 
 
 
-
+strings = [
+    "first_name = 30 AND amount > 4"
+]
 
 strings = [
-    "users.id = 4 AND email = 'ali@a.xom'",
+    "id = 5",                                    # Simple equality
+    "email = 'example@email.com'",               # String equality
+    "first_name = 'John' AND amount > 100",      # Combination with AND
+    "amount < 200 OR first_name = 'Alice'",      # Combination with OR
+    "id IS NOT NULL",                            # NULL check
+    "first_name LIKE 'J%'",                      # Pattern matching with LIKE
+    "email = 'user@example.com' OR amount >= 150 AND amount <= 300", # Complex combination 
 ]
 for s in strings:
     parser = Parser(s)
