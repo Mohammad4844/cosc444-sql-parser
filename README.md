@@ -47,7 +47,7 @@ orders: id, user_id, date, amount
 <function> := SUM | AVG | COUNT | MAX | MIN | UPPER | LOWER
 
 # logic definitions
-<term> := <table-field> | <string> | <integer> | <float> | (<expression>)
+<term> := <table-field> | <string> | <float> | <integer> | (<expression>)
 <expression> := <term> | <term> <operator> <term> | <function> ( <expression> ) | <table-field> LIKE <string> | ( <select-query> )
 <condition> = <expression> | <expression> AND <condition> | <expression> OR <condition>
 
