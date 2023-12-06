@@ -408,6 +408,319 @@ class Parser:
 
 
 
+
+
+    def parse_field_list(self, index):
+
+        if index > len(self.input):
+            return []
+        
+        index = self.skip_whitespace(index)
+        if index is None:
+            return []
+        
+        indices = []
+        indices += self.parse_field_list_1(index)
+        indices += self.parse_field_list_2(index)
+
+        return flatten_and_reduce(indices)
+
+    def parse_field_list_1(self, index):
+        # checking: <table-field>
+        return flatten_and_reduce(self.parse_table_field(index))
+
+    def parse_field_list_2(self, index):
+        # checking: <table-field>, <field-list>
+
+        # <table-field>
+        indices = self.parse_table_field(index)
+
+        indices = self.skip_whitespaces(indices)
+        
+        # ,
+        for i in range(len(indices)):
+            if self.input[indices[i]:].startswith(','):
+                indices[i] += 1
+            else:
+                indices[i] = None
+
+        indices = flatten_and_reduce(indices)
+
+        indices = self.skip_whitespaces(indices)
+
+        # <field-list>
+        for i in range(len(indices)):
+            indices[i] = self.parse_field_list(indices[i])
+        # indices = self.skip_whitespaces(indices)
+        
+        return flatten_and_reduce(indices)
+
+
+
+    def parse_expression_list(self, index):
+
+        if index > len(self.input):
+            return []
+        
+        index = self.skip_whitespace(index)
+        if index is None:
+            return []
+        
+        indices = []
+        indices += self.parse_expression_list_1(index)
+        indices += self.parse_expression_list_2(index)
+
+        return flatten_and_reduce(indices)
+
+    def parse_expression_list_1(self, index):
+        # checking: <expression>
+        return flatten_and_reduce(self.parse_expression(index))
+
+    def parse_expression_list_2(self, index):
+        # checking: <expression>, <expression-list>
+
+        # <expression>
+        indices = self.parse_expression(index)
+        indices = self.skip_whitespaces(indices)
+        
+        # ,
+        for i in range(len(indices)):
+            if self.input[indices[i]:].startswith(','):
+                indices[i] += 1
+            else:
+                indices[i] = None
+
+        indices = flatten_and_reduce(indices)
+        indices = self.skip_whitespaces(indices)
+
+        # <field-list>
+        for i in range(len(indices)):
+            indices[i] = self.parse_expression_list(indices[i])
+            
+        
+        return flatten_and_reduce(indices)
+
+
+
+    def parse_select_clause(self, index):
+
+        if index > len(self.input):
+            return []
+        
+        index = self.skip_whitespace(index)
+        if index is None:
+            return []
+        
+        indices = []
+        indices += self.parse_select_clause_1(index)
+        indices += self.parse_select_clause_2(index)
+
+        return flatten_and_reduce(indices)
+
+    def parse_select_clause_1(self, index):
+        # checking: *
+
+        # *
+        indices = []
+        if self.input[index:].startswith('*'):
+            indices.append(index + 1)
+        else:
+            indices.append(None)
+
+        return flatten_and_reduce(indices)
+
+    def parse_select_clause_2(self, index):
+        # checking: <field-alias-list>
+
+        # <field-alias-list>
+        return flatten_and_reduce(self.parse_field_alias_list(index))
+
+
+
+    def parse_field_alias_list(self, index):
+
+        if index > len(self.input):
+            return []
+        
+        index = self.skip_whitespace(index)
+        if index is None:
+            return []
+        
+        indices = []
+        indices += self.parse_field_alias_list_1(index)
+        indices += self.parse_field_alias_list_2(index)
+
+        return flatten_and_reduce(indices)
+
+    def parse_field_alias_list_1(self, index):
+        # checking: <field-alias>
+
+        # <field-alias>
+        return flatten_and_reduce(self.parse_field_alias(index))
+
+    def parse_field_alias_list_2(self, index):
+        # checking: <field-alias>, <field-alias-list>
+
+        # <field-alias>
+        indices = flatten_and_reduce(self.parse_field_alias(index))
+        indices = self.skip_whitespaces(indices)
+
+        # ,
+        for i in range(len(indices)):
+            if self.input[indices[i]:].startswith(','):
+                indices[i] += 1
+            else:
+                indices[i] = None
+
+        indices = flatten_and_reduce(indices)
+        indices = self.skip_whitespaces(indices)
+
+        # <field-alias-list>
+        for i in range(len(indices)):
+            indices[i] = self.parse_field_alias_list(indices[i])
+            
+        return flatten_and_reduce(indices)
+
+
+
+    def parse_field_alias(self, index):
+
+        if index > len(self.input):
+            return []
+        
+        index = self.skip_whitespace(index)
+        if index is None:
+            return []
+        
+        indices = []
+        indices += self.parse_field_alias_1(index)
+        indices += self.parse_field_alias_2(index)
+
+        return flatten_and_reduce(indices)
+
+    def parse_field_alias_1(self, index):
+        # checking: <table-field>
+
+        # <table-field>
+        return flatten_and_reduce(self.parse_table_field(index))
+
+    def parse_field_alias_2(self, index):
+        # checking: <table-field> as <alias>
+
+        # <table-field>
+        indices = flatten_and_reduce(self.parse_table_field(index))
+        indices = self.skip_whitespaces(indices)
+
+        # as
+        for i in range(len(indices)):
+            if self.input[indices[i]:].startswith('as'):
+                indices[i] += 2
+            else:
+                indices[i] = None
+
+        indices = flatten_and_reduce(indices)
+        indices = self.skip_whitespaces(indices)
+
+        # <alias>
+        for i in range(len(indices)):
+            indices[i] = self.parse_alias(indices[i])
+
+            
+        return flatten_and_reduce(indices)
+
+
+
+
+    def parse_table_alias_list(self, index):
+
+        if index > len(self.input):
+            return []
+        
+        index = self.skip_whitespace(index)
+        if index is None:
+            return []
+        
+        indices = []
+        indices += self.parse_table_alias_list_1(index)
+        indices += self.parse_table_alias_list_2(index)
+
+        return flatten_and_reduce(indices)
+
+    def parse_table_alias_list_1(self, index):
+        # checking: <table-alias>
+
+        # <table-alias>
+        return flatten_and_reduce(self.parse_table_alias(index))
+
+    def parse_table_alias_list_2(self, index):
+        # checking: <table-alias>, <table-alias-list>
+
+        # <<table-alias>
+        indices = flatten_and_reduce(self.parse_table_alias(index))
+        indices = self.skip_whitespaces(indices)
+
+        # ,
+        for i in range(len(indices)):
+            if self.input[indices[i]:].startswith(','):
+                indices[i] += 1
+            else:
+                indices[i] = None
+
+        indices = flatten_and_reduce(indices)
+        indices = self.skip_whitespaces(indices)
+
+        # <table-alias-list>
+        for i in range(len(indices)):
+            indices[i] = self.parse_table_alias_list(indices[i])
+            
+        return flatten_and_reduce(indices)
+
+
+
+    def parse_table_alias(self, index):
+
+        if index > len(self.input):
+            return []
+        
+        index = self.skip_whitespace(index)
+        if index is None:
+            return []
+        
+        indices = []
+        indices += self.parse_table_alias_1(index)
+        indices += self.parse_table_alias_2(index)
+
+        return flatten_and_reduce(indices)
+
+    def parse_table_alias_1(self, index):
+        # checking: <table>
+
+        return flatten_and_reduce(self.parse_table(index))
+        
+    def parse_table_alias_2(self, index):
+        # checking: <table> as <alias>
+
+        # <table>
+        indices = flatten_and_reduce(self.parse_table(index))
+        indices = self.skip_whitespaces(indices)
+
+        # as
+        for i in range(len(indices)):
+            if self.input[indices[i]:].startswith('as'):
+                indices[i] += 2
+            else:
+                indices[i] = None
+
+        indices = flatten_and_reduce(indices)
+        indices = self.skip_whitespaces(indices)
+
+        # <alias>
+        for i in range(len(indices)):
+            indices[i] = self.parse_alias(indices[i])
+
+            
+        return flatten_and_reduce(indices)
+
 if __name__ == '__main__':
     strings = [
         "first_name = 30 AND amount > 4"
