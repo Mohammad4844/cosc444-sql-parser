@@ -58,7 +58,7 @@ class Parser:
             elif substring.strip() == '': # check for empty string
                 break
             else:
-                raise Exception(f'Failed to tokenize input. Error encounterede on character {i}')
+                raise Exception(f'Failed to tokenize input. Error encountered on character {i}')
         
         return tokenized_input
     
@@ -102,8 +102,11 @@ class Parser:
 
     def parse(self):
         try:
-            self.parse_table_field()
-            return 'Parsed'
+            self.parse_value()
+            if self.index == len(self.input) - 1:
+                return 'Parsed'
+            else:
+                self.raise_exception('<longer input>')
         except SyntaxError as e:
             return e
 
@@ -131,18 +134,65 @@ class Parser:
             self.consume('.')
             self.parse_field()
         
+    # basic definitions
+    def parse_string(self):
+        match = re.search(r"^'[^']*'$", self.peek())
+        if match:
+            self.consume(self.peek())
+        else:
+            self.raise_exception('<string>')
+        
+    def parse_float(self):
+        match = re.search(r"^\d+\.\d+$", self.peek())
+        if match:
+            self.consume(self.peek())
+        else:
+            self.raise_exception('<float>')
 
+    def parse_integer(self):
+        match = re.search(r"^\d+$", self.peek())
+        if match:
+            self.consume(self.peek())
+        else:
+            self.raise_exception('<float>')
 
+    def parse_value(self):
+        if re.search(r"^'[^']*'$", self.peek()):
+            self.parse_string()
+        elif re.search(r"^\d+\.\d+$", self.peek()): # important that float be done first since it overlaps with integer definition
+            self.parse_float()
+        elif re.search(r"^\d+$", self.peek()):
+            self.parse_integer()
+        else:
+            self.raise_exception(['<string>', '<float>', '<integer>'])
 
-
-
+    def parse_alias(self):
+        self.parse_string()
+    
+    def parse_function(self):
+        functions = ['SUM', 'AVG', 'COUNT', 'MAX', 'MIN', 'UPPER', 'LOWER']
+        if self.peek() in functions:
+             self.consume(self.peek())
+        else:
+            self.raise_exception(functions)
+    
+    def parse_math_operator(self):
+        math_operators = ['+', '-', '*', '/']
+        if self.peek() in math_operators:
+             self.consume(self.peek())
+        else:
+            self.raise_exception(math_operators)
+        
+    def parse_comparison_operator(self):
+        comparison_operators = ['']
+        if self.peek() in comparison_operators:
+             self.consume(self.peek())
+        else:
+            self.raise_exception(comparison_operators)
 
 
 strings = [
-    'users.id',
-    'email',
-    'orders.amount',
-    'orders)'
+
 ]
 for s in strings:
     parser = Parser(s)
