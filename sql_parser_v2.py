@@ -92,8 +92,10 @@ class Parser:
             return None
 
     def look_ahead_n(self, n):
-        raise Exception('fix this first')
-        return self.input[self.index + n]
+        if self.index + n < len(self.input):
+            return self.input[self.index + n]
+        else: 
+            return None
 
     def raise_exception(self, expected, i = None, got = None):
         # i = token index
@@ -102,8 +104,8 @@ class Parser:
 
     def parse(self):
         try:
-            self.parse_value()
-            if self.index == len(self.input) - 1:
+            self.parse_condition()
+            if self.index == len(self.input):
                 return 'Parsed'
             else:
                 self.raise_exception('<longer input>')
@@ -184,18 +186,94 @@ class Parser:
             self.raise_exception(math_operators)
         
     def parse_comparison_operator(self):
-        comparison_operators = ['']
+        comparison_operators = ['<=', '>=', '!=', '=', '<', '>']
         if self.peek() in comparison_operators:
              self.consume(self.peek())
         else:
             self.raise_exception(comparison_operators)
 
+    def parse_term(self):
+        if self.peek() == '(':
+            self.consume('(')
+            self.parse_math_expression()
+            self.consume(')')
+        elif re.search(r"^'[^']*'$", self.peek()) or re.search(r"^\d+\.\d+$", self.peek()) or re.search(r"^\d+$", self.peek()):
+            self.parse_value()
+        else:
+            self.parse_table_field()
+        
+    def parse_math_expression(self):
+        functions = ['SUM', 'AVG', 'COUNT', 'MAX', 'MIN', 'UPPER', 'LOWER']
+        math_operators = ['+', '-', '*', '/']
+        if self.peek() in functions:
+            self.parse_function()
+            self.consume('(')
+            self.parse_function_body()
+            self.consume(')')
+        else:
+            self.parse_term()
+            if self.peek() in math_operators: # optional part
+                self.parse_optional_math_clause()
+        
+    def parse_function_body(self):
+        if self.peek() == '*':
+            self.consume('*')
+        else:
+            self.parse_math_expression()
 
-strings = [
+    def parse_optional_math_clause(self):
+        math_operators = ['+', '-', '*', '/']
+        self.parse_math_operator() 
+        self.parse_term()
+        if self.peek() in math_operators: # optional part
+            self.parse_optional_math_clause()
 
+    def parse_boolean_expression(self):
+        tables = ['users', 'orders']
+        fields = ['id', 'email', 'first_name', 'last_name', 'user_id', 'date', 'amount']
+        if (self.peek() in fields and self.look_ahead() in ['LIKE', 'IS']) or \
+           (self.peek() in tables and self.look_ahead() == '.' and self.look_ahead_n(2) in fields and self.look_ahead_n(3) in ['LIKE', 'IS']): # look-ahead for <table-field> followed by LIKE or IS
+            self.parse_table_field()
+            if self.peek() == 'LIKE':
+                self.consume('LIKE')
+                self.parse_string()
+            elif self.peek() == 'IS':
+                self.consume('IS')
+                if self.peek() == 'NOT': # optional
+                    self.consume('NOT')
+                self.consume('NULL')
+            else:
+                self.raise_exception(['LIKE <string>', 'IS [NOT] NULL'])
+        else:
+            self.parse_math_expression()
+            self.parse_comparison_operator()
+            self.parse_math_expression()
+    
+    def parse_condition(self):
+        self.parse_boolean_expression()
+        if self.peek() in ['AND', 'OR']:
+            self.consume(self.peek())
+            self.parse_condition()
+
+        
+        
+                
+        
+
+
+
+
+
+test_cases = [
+    "user_id = 1 OR first_name LIKE 'John' AND amount >= 300",
+    "(orders.amount + 100) / 2 > 150",
+    "email IS NOT NULL",
+    "users.id = 10 AND orders.amount > 200 OR email LIKE '%example.com' AND date <= '2022-01-01'",
+    "LOWER(first_name) = 'john' AND COUNT(*) > 5"
 ]
-for s in strings:
-    parser = Parser(s)
+
+for test in test_cases:
+    parser = Parser(test)
     print(parser.parse())
 
  
