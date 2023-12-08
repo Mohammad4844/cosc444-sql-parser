@@ -15,11 +15,13 @@ for k in keyword_list:
 
 class Parser:
     def __init__(self, input):
-        self.input = self.tokenize(input)
+        self.input, self.input_index_map = self.tokenize(input)
+        
         self.index = 0
 
     def tokenize(self, input):
         tokenized_input = []
+        index_map = []
         i = 0
         while i < len(input):
             i = self.skip_whitespace(input, i)
@@ -54,13 +56,14 @@ class Parser:
             
             if token is not None:
                 tokenized_input.append(token)
+                index_map.append((i, i + len(token)))
                 i += len(token)
             elif substring.strip() == '': # check for empty string
                 break
             else:
                 raise Exception(f'Failed to tokenize input. Error encountered on character {i}')
         
-        return tokenized_input
+        return tokenized_input, index_map
     
     def skip_whitespace(self, input, i):
         pattern = r'\S'
@@ -110,7 +113,7 @@ class Parser:
             else:
                 self.raise_exception('<longer input>')
         except SyntaxError as e:
-            return e
+            return e.msg
 
     # databas tables & fields
     def parse_table(self):
@@ -159,11 +162,11 @@ class Parser:
             self.raise_exception('<float>')
 
     def parse_value(self):
-        if re.search(r"^'[^']*'$", self.peek()):
+        if self.peek() is not None and re.search(r"^'[^']*'$", self.peek()):
             self.parse_string()
-        elif re.search(r"^\d+\.\d+$", self.peek()): # important that float be done first since it overlaps with integer definition
+        elif self.peek() is not None and re.search(r"^\d+\.\d+$", self.peek()): # important that float be done first since it overlaps with integer definition
             self.parse_float()
-        elif re.search(r"^\d+$", self.peek()):
+        elif self.peek() is not None and  re.search(r"^\d+$", self.peek()):
             self.parse_integer()
         else:
             self.raise_exception(['<string>', '<float>', '<integer>'])
@@ -197,7 +200,7 @@ class Parser:
             self.consume('(')
             self.parse_math_expression()
             self.consume(')')
-        elif re.search(r"^'[^']*'$", self.peek()) or re.search(r"^\d+\.\d+$", self.peek()) or re.search(r"^\d+$", self.peek()):
+        elif self.peek() is not None and (re.search(r"^'[^']*'$", self.peek()) or re.search(r"^\d+\.\d+$", self.peek()) or re.search(r"^\d+$", self.peek())):
             self.parse_value()
         else:
             self.parse_table_field()
@@ -265,11 +268,7 @@ class Parser:
 
 
 test_cases = [
-    "user_id = 1 OR first_name LIKE 'John' AND amount >= 300",
-    "(orders.amount + 100) / 2 > 150",
-    "email IS NOT NULL",
-    "users.id = 10 AND orders.amount > 200 OR email LIKE '%example.com' AND date <= '2022-01-01'",
-    "LOWER(first_name) = 'john' AND COUNT(*) > 5"
+    "users.id = 3 AND",
 ]
 
 for test in test_cases:
