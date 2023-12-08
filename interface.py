@@ -5,17 +5,22 @@ import re
 def parse_fn(query):
     parser = Parser(query)
     parse_output = parser.parse()
-    print(parse_output)
-    match = re.search(r"Syntax Error at (\d+)", parse_output)
-    if match:
-        error_token_index = int(match.group(1))
-        if error_token_index >= len(parser.input_index_map):
-            error_token_index = -1
-        start, end = parser.input_index_map[error_token_index]
+
+    if parse_output.startswith('Tokenization'):
+        match = re.search(r"Error at (\d+)", parse_output)
+        if match:
+            start = int(match.group(1))
+            end = len(parse_output) - 1
+    else:      
+        match = re.search(r"Error at \((\d+),\s*(\d+)\)", parse_output)
+        if match:
+            start, end = int(match.group(1)), int(match.group(2))
+        
+            
     
     highlighted_output = []
     for i, q in enumerate(query):
-        if match and start <= i <= end - 1:
+        if match and start <= i < end:
             highlighted_output.append((q, 'Error'))
         else:
             highlighted_output.append((q, None))

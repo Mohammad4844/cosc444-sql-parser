@@ -15,8 +15,9 @@ for k in keyword_list:
 
 class Parser:
     def __init__(self, input):
-        self.input, self.input_index_map = self.tokenize(input)
-        
+        self.string_input = input
+        self.input = []
+        self.input_index_map = []
         self.index = 0
 
     def tokenize(self, input):
@@ -44,7 +45,7 @@ class Parser:
                 token = substring[match.start():match.end()]
 
             # multi-line comments
-            match = re.search(r"^/\*.*?\*/", substring)
+            match = re.search(r"^/\*.*?\*/", substring, re.DOTALL)
             if not token and match:
                 token = substring[match.start():match.end()]
 
@@ -61,7 +62,7 @@ class Parser:
             elif substring.strip() == '': # check for empty string
                 break
             else:
-                raise Exception(f'Failed to tokenize input. Error encountered on character {i}')
+                raise SyntaxError(f'Tokenization Error at {i}. Expected: {["<string>", "<float>", "<integer>", "<comment>", "<token>"]}')
         
         return tokenized_input, index_map
     
@@ -100,13 +101,22 @@ class Parser:
         else: 
             return None
 
+
+    def untokenize_index(self, i):
+        # this turns a n index for the token array into an index for the original string
+        return self.input_index_map[i]
+
     def raise_exception(self, expected, i = None, got = None):
         # i = token index
-        error_stmt = f'Syntax Error at {i if i else self.index }. Got {got if got else self.peek()}, but expected {"one of:" if isinstance(expected, list) else ""}{expected}'
+        if i is None:
+            i = min(self.index, len(self.input) - 1)
+        i = self.untokenize_index(i)
+        error_stmt = f'Syntax Error at {i}. Expected {expected}, but Got {got if got else self.peek()}, '
         raise SyntaxError(error_stmt)
 
     def parse(self):
         try:
+            self.input, self.input_index_map = self.tokenize(self.string_input)
             self.parse_condition()
             if self.index == len(self.input):
                 return 'Parsed'
@@ -260,10 +270,36 @@ class Parser:
 
         
         
-                
-        
+    # big picture sql
+    def parse_comment(self):
+        match = re.search(r'^\s*/\*.*?\*/\s*$', self.peek(), re.DOTALL)
+        if match:
+            self.consume(self.peek())
+        else:
+            self.raise_exception('<commment>')
 
+    def parse_statement(self):
+        if self.peek() == 'SELECT':
+            self.parse_select_query()
+            self.consume(';')
+        elif self.peek() == 'INSERT':
+            self.parse_insert_query()
+            self.consume(';')
+        elif self.peek() == 'UPDATE':
+            self.parse_update_query()
+            self.consume(';')
+        elif self.peek() == 'DELETE':
+            self.parse_delete_query()
+            self.consume(';')
+        elif self.peek().startswith('/*'):
+            self.parse_comment()
+        else:
+            self.raise_exception(['<select>', '<insert>', '<update>', '<delete>', '<comment>'])
 
+    def parse_sql(self):
+        self.parse_statement()
+        if self.peek() is not None:
+            self.parse_sql()
 
 
 
