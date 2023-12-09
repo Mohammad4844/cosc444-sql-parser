@@ -268,8 +268,73 @@ class Parser:
             self.consume(self.peek())
             self.parse_condition()
 
+
+
+    # lists
+    def parse_value_list(self):
+        self.parse_value()
+        if self.peek() in [',']:
+            self.consume(self.peek())
+            self.parse_value_list()
         
-        
+    def parse_field_list(self):
+        self.parse_table_field()
+        if self.peek() in [',']:
+            self.consume(self.peek())
+            self.parse_field_list()
+
+    def parse_assignment_list(self):
+
+        #  <table-field> = <value>
+        self.parse_table_field()
+        if self.peek() in ['=']:
+            self.consume(self.peek())
+        else:
+            self.raise_exception('=')
+        self.parse_value()
+
+        #  [, <assignment-list>]
+        if self.peek() in [',']:
+            self.consume(self.peek())
+            self.parse_assignment_list()
+
+    
+
+    # query helpers (mostly for select queries)
+    
+    def parse_field_alias_list(self):
+        #  <field-alias>
+        self.parse_field_alias()
+        #  [, <field-alias-list>]
+        if self.peek() in [',']:
+            self.consume(self.peek())
+            self.parse_field_alias_list()
+
+    def parse_table_alias_list(self):
+        #  <table-alias>
+        self.parse_table_alias()
+        #  [, <table-alias-list>]
+        if self.peek() in [',']:
+            self.consume(self.peek())
+            self.parse_table_alias_list()
+
+
+    def parse_order_list(self):
+        # <order-item>
+        self.parse_order_item()
+        #  [, <order_list>]
+        if self.peek() in [',']:
+            self.consume(self.peek())
+            self.parse_order_list()
+
+    def parse_order_item(self):
+        # <table-field>
+        self.parse_table_field()
+        # [ASC | DESC]
+        if self.peek() in ['ASC', 'DESC']:
+            self.consume(self.peek())
+
+
     # big picture sql
     def parse_comment(self):
         match = re.search(r'^\s*/\*.*?\*/\s*$', self.peek(), re.DOTALL)
@@ -310,5 +375,3 @@ test_cases = [
 for test in test_cases:
     parser = Parser(test)
     print(parser.parse())
-
- 
