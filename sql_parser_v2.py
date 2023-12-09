@@ -270,6 +270,7 @@ class Parser:
 
 
 
+
     # lists
     def parse_value_list(self):
         self.parse_value()
@@ -334,6 +335,55 @@ class Parser:
         if self.peek() in ['ASC', 'DESC']:
             self.consume(self.peek())
 
+
+
+    def parse_select_clause(self):
+        if self.peek() == '*':
+            self.consume('*')
+        else:
+            self.parse_field_alias_list()
+
+    def parse_field_alias_list(self):
+        self.parse_field_alias()
+        if self.peek() == ',':
+            self.consume(',')
+            self.parse_field_alias_list()
+
+    def parse_field_alias(self):
+        self.parse_table_field()
+        if self.peek() == 'AS':
+            self.consume('AS')
+            self.parse_alias()
+
+    def parse_table_alias(self):
+        self.parse_table()
+        if self.peek() == 'AS':
+            self.consume('AS')
+            self.parse_alias()
+
+    def parse_table_clause(self):
+        self.parse_table()
+        self.parse_optional_join_clause()
+
+    def parse_optional_join_clause(self):
+        if self.peek() == 'RIGHT' or self.peek() == 'LEFT' or self.peek() == 'INNER' or self.peek() == 'FULL':
+            self.parse_join_clause()
+            self.parse_optional_join_clause()
+
+    def parse_join_clause(self):
+        self.parse_join_type()
+        self.consume('JOIN')
+        self.parse_table()
+        self.consume('ON')
+        self.parse_condition()
+
+    def parse_join_type(self):
+        join_types = ['RIGHT', 'LEFT', 'INNER', 'FULL']
+        if self.peek() in join_types:
+            self.consume(self.peek())
+        else:
+            self.raise_exception(join_types)     
+        
 
     # big picture sql
     def parse_comment(self):
