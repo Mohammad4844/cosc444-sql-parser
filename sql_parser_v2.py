@@ -385,6 +385,44 @@ class Parser:
             self.raise_exception(join_types)     
         
 
+    # basic queries 
+    def parse_insert(query):
+        insert_pattern = r"INSERT INTO (\w+) \((.*?)\) VALUES \((.*?)\)"
+        match = re.match(insert_pattern, query)
+        if match:
+            table = match.group(1)
+            fields = [field.strip() for field in match.group(2).split(",")]
+            values = [value.strip() for value in match.group(3).split(",")]
+            return {'query_type': 'INSERT', 'table': table, 'fields': fields, 'values': values}
+        return None
+
+    def parse_update(query):
+        update_pattern = r"UPDATE (\w+) SET \((.*?)\)"
+        match = re.match(update_pattern, query)
+        if match:
+            table = match.group(1)
+            assignments = [assignment.strip() for assignment in match.group(2).split(",")]
+            return {'query_type': 'UPDATE', 'table': table, 'assignments': assignments}
+        return None
+
+    def parse_delete(query):
+        delete_pattern = r"DELETE FROM (\w+)(.*?)"
+        match = re.match(delete_pattern, query)
+        if match:
+            table = match.group(1)
+            return {'query_type': 'DELETE', 'table': table}
+        return None
+
+    # select query
+    def parse_select(query):
+        select_pattern = r"SELECT (.*?) FROM (\w+)(.*?)"
+        match = re.match(select_pattern, query)
+        if match:
+            select_clause = match.group(1)
+            table = match.group(2)
+            return {'query_type': 'SELECT', 'select_clause': select_clause, 'table': table}
+        return None
+
     # big picture sql
     def parse_comment(self):
         match = re.search(r'^\s*/\*.*?\*/\s*$', self.peek(), re.DOTALL)
