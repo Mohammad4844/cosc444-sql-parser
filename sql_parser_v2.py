@@ -4,7 +4,7 @@ import re
 keyword_list = [
     ',', '.', ';', 'SELECT', 'DISTINCT', 'FROM', 'WHERE', 'GROUP', 'BY', 'HAVING', 'ORDER', 'DELETE', 'UPDATE', 'SET', 'INSERT', 'INTO', 'VALUES',
     'ASC', 'DESC', 'RIGHT', 'LEFT', 'INNER', 'FULL', 'JOIN', 'ON', 'AS', 
-    'SUM', 'AVG', 'COUNT', 'MAX', 'MIN', 'UPPER', 'LOWER', 'AND', 'OR', 'LIKE', 'IS', 'NOT', 'NULL', 
+    'SUM', 'AVG', 'COUNT', 'MAX', 'MIN', 'UPPER', 'LOWER', 'ROUND', 'LENGTH', 'ABS', 'AND', 'OR', 'LIKE', 'IS', 'NOT', 'NULL', 
     'users', 'orders', 'id', 'email', 'first_name', 'last_name', 'user_id', 'date', 'amount',
     '<=', '>=', '!=', '+', '-', '*', '/', '=', '<', '>', '(', ')'
 ]
@@ -183,13 +183,20 @@ class Parser:
 
     def parse_alias(self):
         self.parse_string()
-    
-    def parse_function(self):
-        functions = ['SUM', 'AVG', 'COUNT', 'MAX', 'MIN', 'UPPER', 'LOWER']
-        if self.peek() in functions:
+
+    def parse_scalar_function(self):
+        scalar_functions = ['UPPER', 'LOWER', 'ROUND', 'LENGTH', 'ABS']
+        if self.peek() in scalar_functions:
              self.consume(self.peek())
         else:
-            self.raise_exception(functions)
+            self.raise_exception(scalar_functions)
+
+    def parse_aggregate_function(self):
+        aggregate_functions = ['SUM', 'AVG', 'COUNT', 'MAX', 'MIN']
+        if self.peek() in aggregate_functions:
+             self.consume(self.peek())
+        else:
+            self.raise_exception(aggregate_functions)
     
     def parse_math_operator(self):
         math_operators = ['+', '-', '*', '/']
@@ -216,23 +223,17 @@ class Parser:
             self.parse_table_field()
         
     def parse_math_expression(self):
-        functions = ['SUM', 'AVG', 'COUNT', 'MAX', 'MIN', 'UPPER', 'LOWER']
+        scalar_functions = ['UPPER', 'LOWER', 'ROUND', 'LENGTH', 'ABS']
         math_operators = ['+', '-', '*', '/']
-        if self.peek() in functions:
-            self.parse_function()
+        if self.peek() in scalar_functions:
+            self.parse_scalar_function()
             self.consume('(')
-            self.parse_function_body()
+            self.parse_math_expression()
             self.consume(')')
         else:
             self.parse_term()
             if self.peek() in math_operators: # optional part
                 self.parse_optional_math_clause()
-        
-    def parse_function_body(self):
-        if self.peek() == '*':
-            self.consume('*')
-        else:
-            self.parse_math_expression()
 
     def parse_optional_math_clause(self):
         math_operators = ['+', '-', '*', '/']
@@ -267,9 +268,6 @@ class Parser:
         if self.peek() in ['AND', 'OR']:
             self.consume(self.peek())
             self.parse_condition()
-
-
-
 
     # lists
     def parse_value_list(self):
@@ -344,16 +342,27 @@ class Parser:
             self.parse_field_alias_list()
 
     def parse_field_alias_list(self):
+        
         self.parse_field_alias()
         if self.peek() == ',':
             self.consume(',')
             self.parse_field_alias_list()
 
     def parse_field_alias(self):
-        self.parse_table_field()
-        if self.peek() == 'AS':
-            self.consume('AS')
-            self.parse_alias()
+        aggregate_functions = ['SUM', 'AVG', 'COUNT', 'MAX', 'MIN']
+        if self.peek() in aggregate_functions:
+            self.parse_aggregate_function()
+            self.consume('(')
+            self.parse_table_field()
+            self.consume(')')
+            if self.peek() == 'AS':
+                self.consume('AS')
+                self.parse_alias()
+        else:
+            self.parse_table_field()
+            if self.peek() == 'AS':
+                self.consume('AS')
+                self.parse_alias()
 
     def parse_table_alias(self):
         self.parse_table()
@@ -474,7 +483,21 @@ class Parser:
 
 
 test_cases = [
-    "SELECT users. AS 'aaa' FROM users;",
+"""
+SELECT DISTINCT users.first_name AS 'name', users.last_name AS 'surname', orders.date, orders.amount
+FROM users
+INNER JOIN orders ON users.id = orders.user_id
+WHERE users.first_name LIKE 'JOHN?' AND amount >= ((2.5) * 33) - 31
+GROUP BY date
+HAVING date LIKE '?2023?'
+ORDER BY users.first_name DESC, orders.amount ASC;
+
+INSERT INTO users (id, email, first_name, last_name) VALUES (355, 'johncena123@gmail.com', 'John', 'Cena');
+
+UPDATE users SET (users.email = 'johncena@gmail.com') WHERE id = 355;
+
+DELETE FROM orders WHERE amount = 3;
+""",
 ]
 
 for test in test_cases:

@@ -12,14 +12,14 @@
 <integer> := **all legal integers**
 <value> := <string> | <float> | <integer>                                     // use look-ahead for this                         
 <alias> := <string>
-<function> := SUM | AVG | COUNT | MAX | MIN | UPPER | LOWER
+<scalar-function> := UPPER | LOWER | ROUND | LENGTH | ABS
+<aggregate-function> := SUM | AVG | COUNT | MAX | MIN
 <math-operator> := + | - | * | /
 <comparison-operator> := = | != | < | > | <= | >= 
 
 # logic definitions
 <term> := <table-field> | <value> | ( <math-expresion> )                              // the production <term> := ( <math-expresion> ) allows brackets, but may introduce cycles that are problematic - so remove this if its casuing issues
-<math-expression> := <term> <optional-math-clause> | <function> ( <function-body> )               // potentially include <math-expression> := ( <select-query> ), which I think is unambiguous if you a look-ahead for SELECT   
-<function-body> := * | <math-expression>
+<math-expression> := <term> <optional-math-clause> | <scalar-function> ( <math-expression> )               // potentially include <math-expression> := ( <select-query> ), which I think is unambiguous if you a look-ahead for SELECT   
 <optional-math-clause> := λ | <math-operator> <term> <optional-math-clause>
 <boolean-expression> = <math-expression> <comparison-operator> <math-expression> | <table-field> LIKE <string> | <table-field> IS [NOT] NULL              //  look-ahead for <table-field>
 <condition> = <boolean-expression> [AND <condition | OR <condition> ]
@@ -32,7 +32,7 @@
 # query helpers (mostly for select query)
 <select-clause> := * | <field-alias-list>
 <field-alias-list> := <field-alias> [, <field-alias-list>]
-<field-alias> := <table-field> [AS <alias>]
+<field-alias> := <table-field> [AS <alias>] | <aggregate-function> ( <table-field> ) [AS <alias>]
 <table-alias-list> := <table-alias> [, <table-alias-list>]
 <table-alias> := <table> [AS <alias>]
 <table-clause> := <table> <optional-join-clause>
