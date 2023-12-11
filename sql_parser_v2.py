@@ -111,13 +111,13 @@ class Parser:
         if i is None:
             i = min(self.index, len(self.input) - 1)
         i = self.untokenize_index(i)
-        error_stmt = f'Syntax Error at {i}. Expected {expected}, but Got {got if got else self.peek()}, '
+        error_stmt = f'Syntax Error at {i}. Expected {expected}, but Got {got if got else self.peek()}'
         raise SyntaxError(error_stmt)
 
     def parse(self):
         try:
             self.input, self.input_index_map = self.tokenize(self.string_input)
-            self.parse_condition()
+            self.parse_sql()
             if self.index == len(self.input):
                 return 'Parsed'
             else:
@@ -385,6 +385,61 @@ class Parser:
             self.raise_exception(join_types)     
         
 
+    # basic queries
+    def parse_insert_query(self):
+        self.consume('INSERT')
+        self.consume('INTO')
+        self.parse_table()
+        self.consume('(')
+        self.parse_field_list()
+        self.consume(')')
+        self.consume('VALUES')
+        self.consume('(')
+        self.parse_value_list()
+        self.consume(')')
+
+    def parse_update_query(self):
+        self.consume('UPDATE')
+        self.parse_table()
+        self.consume('SET')
+        self.consume('(')
+        self.parse_assignment_list()
+        self.consume(')')
+        if self.peek() == 'WHERE':
+            self.consume('WHERE')
+            self.parse_condition()
+
+    def parse_delete_query(self):
+        self.consume('DELETE')
+        self.consume('FROM')
+        self.parse_table()
+        if self.peek() == 'WHERE':
+            self.consume('WHERE')
+            self.parse_condition()
+
+    # select query
+    def parse_select_query(self):
+        self.consume('SELECT')
+        if self.peek() == 'DISTINCT':
+            self.consume('DISTINCT')
+        self.parse_select_clause()
+        self.consume('FROM')
+        self.parse_table_clause()
+        if self.peek() == 'WHERE':
+            self.consume('WHERE')
+            self.parse_condition()
+        if self.peek() == 'GROUP':
+            self.consume('GROUP')
+            self.consume('BY')
+            self.parse_field_list()
+        if self.peek() == 'HAVING':
+            self.consume('HAVING')
+            self.parse_condition()
+        if self.peek() == 'ORDER':
+            self.consume('ORDER')
+            self.consume('BY')
+            self.parse_order_list()
+
     # big picture sql
     def parse_comment(self):
         match = re.search(r'^\s*/\*.*?\*/\s*$', self.peek(), re.DOTALL)
@@ -419,7 +474,7 @@ class Parser:
 
 
 test_cases = [
-    "users.id = 3 AND",
+    "SELECT users. AS 'aaa' FROM users;",
 ]
 
 for test in test_cases:

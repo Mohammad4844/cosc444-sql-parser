@@ -44,7 +44,7 @@
 
 # basic queries
 <insert-query> := INSERT INTO <table> ( <field-list> ) VALUES ( <value-list> )
-<update-query> := UPDATE <table> SET ( <assignment-list> )
+<update-query> := UPDATE <table> SET ( <assignment-list> ) [WHERE <condition>]
 <delete-query> := DELETE FROM <table> [WHERE <condition>]
 
 # select query
