@@ -184,19 +184,12 @@ class Parser:
     def parse_alias(self):
         self.parse_string()
 
-    def parse_scalar_function(self):
-        scalar_functions = ['UPPER', 'LOWER', 'ROUND', 'LENGTH', 'ABS']
-        if self.peek() in scalar_functions:
+    def parse_function(self):
+        functions = ['UPPER', 'LOWER', 'ROUND', 'LENGTH', 'ABS', 'SUM', 'AVG', 'COUNT', 'MAX', 'MIN']
+        if self.peek() in functions:
              self.consume(self.peek())
         else:
-            self.raise_exception(scalar_functions)
-
-    def parse_aggregate_function(self):
-        aggregate_functions = ['SUM', 'AVG', 'COUNT', 'MAX', 'MIN']
-        if self.peek() in aggregate_functions:
-             self.consume(self.peek())
-        else:
-            self.raise_exception(aggregate_functions)
+            self.raise_exception(functions)
     
     def parse_math_operator(self):
         math_operators = ['+', '-', '*', '/']
@@ -223,10 +216,10 @@ class Parser:
             self.parse_table_field()
         
     def parse_math_expression(self):
-        scalar_functions = ['UPPER', 'LOWER', 'ROUND', 'LENGTH', 'ABS']
+        functions = ['UPPER', 'LOWER', 'ROUND', 'LENGTH', 'ABS', 'SUM', 'AVG', 'COUNT', 'MAX', 'MIN']
         math_operators = ['+', '-', '*', '/']
-        if self.peek() in scalar_functions:
-            self.parse_scalar_function()
+        if self.peek() in functions:
+            self.parse_function()
             self.consume('(')
             self.parse_math_expression()
             self.consume(')')
@@ -349,9 +342,9 @@ class Parser:
             self.parse_field_alias_list()
 
     def parse_field_alias(self):
-        aggregate_functions = ['SUM', 'AVG', 'COUNT', 'MAX', 'MIN']
-        if self.peek() in aggregate_functions:
-            self.parse_aggregate_function()
+        functions = ['UPPER', 'LOWER', 'ROUND', 'LENGTH', 'ABS', 'SUM', 'AVG', 'COUNT', 'MAX', 'MIN']
+        if self.peek() in functions:
+            self.parse_function()
             self.consume('(')
             self.parse_table_field()
             self.consume(')')
@@ -484,19 +477,14 @@ class Parser:
 
 test_cases = [
 """
-SELECT DISTINCT users.first_name AS 'name', users.last_name AS 'surname', orders.date, orders.amount
+
+SELECT DISTINCT users.first_name AS 'Given Name', users.last_name AS 'Surname', SUM(users.id) AS 'Total Spent on Large Orders'
 FROM users
-INNER JOIN orders ON users.id = orders.user_id
-WHERE users.first_name LIKE 'JOHN?' AND amount >= ((2.5) * 33) - 31
-GROUP BY date
-HAVING date LIKE '?2023?'
-ORDER BY users.first_name DESC, orders.amount ASC;
-
-INSERT INTO users (id, email, first_name, last_name) VALUES (355, 'johncena123@gmail.com', 'John', 'Cena');
-
-UPDATE users SET (users.email = 'johncena@gmail.com') WHERE id = 355;
-
-DELETE FROM orders WHERE amount = 3;
+RIGHT JOIN orders ON users.id = orders.user_id
+WHERE users.id IS NOT NULL AND users.email LIKE '%@hotmail.com' AND orders.amount >= ((100) * 1.05) - (5)
+GROUP BY users.id
+HAVING SUM(orders.amount) > 1000 AND COUNT(orders.id) > 5
+ORDER BY users.first_name DESC, users.last_name DESC;
 """,
 ]
 
